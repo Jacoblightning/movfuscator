@@ -36,13 +36,18 @@ patch -N -r - lcc/src/expr.c movfuscator/expr.patch
 patch -N -r - lcc/etc/lcc.c movfuscator/lcc.patch
 
 # Build the compiler driver
-make -C lcc HOSTFILE=../movfuscator/host.c CFLAGS='-g -DLCCDIR=\"$(BUILDDIR)/\"' lcc
+make -C lcc HOSTFILE=../movfuscator/host.c CFLAGS='-g -DLCCDIR=\"$(BUILDDIR)/\" -std=gnu89' lcc
 
 # Build lcc with the M/o/Vfuscator backend
-make -C lcc all
+make -C lcc CFLAGS="-std=gnu89" all
 
 # Create movcc
-ln -sfn "$BUILDDIR/lcc" "$BUILDDIR/movcc"
+cat << EOF > "$BUILDDIR/movcc"
+#!/usr/bin/env sh
+set -xv
+exec "$BUILDDIR/lcc" -L/usr/lib32 \$@
+EOF
+chmod +x "$BUILDDIR/movcc"
 
 # Build the M/o/Vfuscator crt libraries
 "$BUILDDIR/movcc" movfuscator/crt0.c -o "$BUILDDIR/crt0.o" -c -Wf--crt0 -Wf--q
